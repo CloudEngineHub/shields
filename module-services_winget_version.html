@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Module: services/pipenv-helpers</title>
+    <title>JSDoc: Module: services/winget/version</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Module: services/pipenv-helpers</h1>
+    <h1 class="page-title">Module: services/winget/version</h1>
 
     
 
@@ -34,7 +34,8 @@
     <div class="container-overview">
     
         
-            <div class="description"><p>Common functions and utilities for tasks related to pipenv</p></div>
+            <div class="description"><p>Comparing versions with winget's version comparator.</p>
+<p>See https://github.com/microsoft/winget-cli/blob/ae566c7bf21cfcc75be7ec30e4036a30eede8396/src/AppInstallerSharedLib/Versions.cpp for original implementation.</p></div>
         
 
         
@@ -69,7 +70,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_pipenv-helpers.js.html">services/pipenv-helpers.js</a>, <a href="services_pipenv-helpers.js.html#line1">line 1</a>
+        <a href="services_winget_version.js.html">services/winget/version.js</a>, <a href="services_winget_version.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -98,155 +99,6 @@
     
 
     
-        <h3 class="subsection-title">Members</h3>
-
-        
-            
-<h4 class="name" id="~isDependency"><span class="type-signature">(inner, constant) </span>isDependency<span class="type-signature"> :Joi</span></h4>
-
-
-
-
-<div class="description">
-    <p>Joi schema for validating dependency.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Joi</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_pipenv-helpers.js.html">services/pipenv-helpers.js</a>, <a href="services_pipenv-helpers.js.html#line15">line 15</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="~isLockfile"><span class="type-signature">(inner, constant) </span>isLockfile<span class="type-signature"> :Joi</span></h4>
-
-
-
-
-<div class="description">
-    <p>Joi schema for validating lock file object.
-Checks if the lock file object has required properties and the properties are valid.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Joi</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_pipenv-helpers.js.html">services/pipenv-helpers.js</a>, <a href="services_pipenv-helpers.js.html#line26">line 26</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-    
 
     
         <h3 class="subsection-title">Methods</h3>
@@ -257,7 +109,7 @@ Checks if the lock file object has required properties and the properties are va
     
 
     
-    <h4 class="name" id="~getDependencyVersion"><span class="type-signature">(inner) </span>getDependencyVersion<span class="signature">(attrs)</span><span class="type-signature"> &rarr; {object}</span></h4>
+    <h4 class="name" id="~compareVersion"><span class="type-signature">(inner) </span>compareVersion<span class="signature">(v1, v2)</span><span class="type-signature"> &rarr; {number}</span></h4>
     
 
     
@@ -265,7 +117,7 @@ Checks if the lock file object has required properties and the properties are va
 
 
 <div class="description">
-    <p>Determines the dependency version based on the dependency type.</p>
+    <p>Compares two strings representing version numbers lexicographically and returns an integer value.</p>
 </div>
 
 
@@ -301,49 +153,7 @@ Checks if the lock file object has required properties and the properties are va
 
         <tr>
             
-                <td class="name"><code>attrs</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Refer to individual attributes</p>
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>kind</code></td>
+                <td class="name"><code>v1</code></td>
             
 
             <td class="type">
@@ -359,14 +169,14 @@ Checks if the lock file object has required properties and the properties are va
 
             
 
-            <td class="description last"><p>Wanted dependency type ('dev' or 'default'), defaults to 'default'</p></td>
+            <td class="description last"><p>The first version to compare</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>wantedDependency</code></td>
+                <td class="name"><code>v2</code></td>
             
 
             <td class="type">
@@ -382,37 +192,7 @@ Checks if the lock file object has required properties and the properties are va
 
             
 
-            <td class="description last"><p>Name of the wanted dependency</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>lockfileData</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Object containing lock file data</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
+            <td class="description last"><p>The second version to compare</p></td>
         </tr>
 
     
@@ -453,7 +233,7 @@ Checks if the lock file object has required properties and the properties are va
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_pipenv-helpers.js.html">services/pipenv-helpers.js</a>, <a href="services_pipenv-helpers.js.html#line48">line 48</a>
+        <a href="services_winget_version.js.html">services/winget/version.js</a>, <a href="services_winget_version.js.html#line18">line 18</a>
     </li></ul></dd>
     
 
@@ -476,102 +256,13 @@ Checks if the lock file object has required properties and the properties are va
 
 
 
-<h5>Throws:</h5>
-<ul>
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        <ul>
-<li>Error if unknown dependency type provided</li>
-</ul>
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">Error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        <ul>
-<li>Error if wanted dependency is not present in lock file data</li>
-</ul>
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">InvalidParameter</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        <ul>
-<li>Error if version or ref is not present for the wanted dependency</li>
-</ul>
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">InvalidParameter</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    </ul>
 
 
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    <p>Object containing wanted dependency version or ref</p>
+    <p>-1 if v1 is smaller than v2, 1 if v1 is larger than v2, 0 if v1 and v2 are equal</p>
 </div>
 
 
@@ -582,7 +273,664 @@ Checks if the lock file object has required properties and the properties are va
     </dt>
     <dd>
         
-<span class="param-type">object</span>
+<span class="param-type">number</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>compareVersion('1.2.3', '1.2.4') // returns -1 because numeric part of first version is smaller than the numeric part of second version.</code></pre>
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~compareVersionPart"><span class="type-signature">(inner) </span>compareVersionPart<span class="signature">(part1, part2)</span><span class="type-signature"> &rarr; {number}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Compares two strings representing version number parts lexicographically and returns an integer value.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>part1</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The first version part to compare</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>part2</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The second version part to compare</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_winget_version.js.html">services/winget/version.js</a>, <a href="services_winget_version.js.html#line116">line 116</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>-1 if part1 is smaller than part2, 1 if part1 is larger than part2, 0 if part1 and part2 are equal</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>compareVersionPart('3', '4') // returns -1 because numeric part of first part is smaller than the numeric part of second part.</code></pre>
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~latest"><span class="type-signature">(inner) </span>latest<span class="signature">(versions)</span><span class="type-signature"> &rarr; {string|undefined}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Finds the largest version number lexicographically from an array of strings representing version numbers and returns it as a string.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>versions</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The array of version numbers to compare</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_winget_version.js.html">services/winget/version.js</a>, <a href="services_winget_version.js.html#line157">line 157</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The largest version number as a string, or undefined if the array is empty</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+|
+
+<span class="param-type">undefined</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>latest(['1.2.3', '1.2.4', '1.3', '2.0']) // returns '2.0' because it is the largest version number.
+latest(['1.2.3', '1.2.4', '1.3-alpha', '2.0-beta']) // returns '2.0-beta'. there is no special handling for pre-release versions.</code></pre>
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~trimLastZeros"><span class="type-signature">(inner) </span>trimLastZeros<span class="signature">(parts)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Removes all trailing zeros from a version number part array.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>parts</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>parts</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_winget_version.js.html">services/winget/version.js</a>, <a href="services_winget_version.js.html#line101">line 101</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~trimPrefix"><span class="type-signature">(inner) </span>trimPrefix<span class="signature">(version)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Removes all leading non-digit characters from a version number string
+if there is a digit before the split character, or no split characters exist.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>version</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The version number string to trim</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_winget_version.js.html">services/winget/version.js</a>, <a href="services_winget_version.js.html#line83">line 83</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The version number string with all leading non-digit characters removed</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
 
 
     </dd>
@@ -616,7 +964,7 @@ Checks if the lock file object has required properties and the properties are va
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Nov 14 2024 14:08:03 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Nov 14 2024 14:08:04 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>
