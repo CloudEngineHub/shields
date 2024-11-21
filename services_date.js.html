@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: services/color-formatters.js</title>
+    <title>JSDoc: Source: services/date.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: services/color-formatters.js</h1>
+    <h1 class="page-title">Source: services/date.js</h1>
 
     
 
@@ -27,190 +27,113 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * Commonly-used functions for determining the colour to use for a badge,
- * including colours based off download count, version number, etc.
+ * Commonly-used functions for rendering badges containing a date
  *
  * @module
  */
 
-import pep440 from '@renovatebot/pep440'
+import dayjs from 'dayjs'
+import calendar from 'dayjs/plugin/calendar.js'
+import customParseFormat from 'dayjs/plugin/customParseFormat.js'
+import { colorScale } from './color-formatters.js'
+import { InvalidResponse } from './index.js'
+
+dayjs.extend(calendar)
+dayjs.extend(customParseFormat)
 
 /**
- * Determines the color used for a badge based on version.
+ * Parse and validate a string date into a dayjs object. Use this helper
+ * in preference to invoking dayjs directly when parsing a date from string.
  *
- * @param {string|number} version Version used for determining badge color
- * @returns {string} Badge color
+ * @param {...any} args - Variadic: Arguments to pass through to dayjs
+ * @returns {dayjs} - Parsed object
+ * @throws {InvalidResponse} - Error if validation fails
+ * @see https://day.js.org/docs/en/parse/string
+ * @see https://day.js.org/docs/en/parse/string-format
+ * @see https://day.js.org/docs/en/parse/is-valid
+ * @example
+ * parseDate('2024-01-01')
+ * parseDate('31/01/2024', 'DD/MM/YYYY')
+ * parseDate('2018 Enero 15', 'YYYY MMMM DD', 'es')
  */
-function version(version) {
-  if (typeof version !== 'string' &amp;&amp; typeof version !== 'number') {
-    throw new Error(`Can't generate a version color for ${version}`)
-  }
-  version = `${version}`
-  let first = version[0]
-  if (first === 'v') {
-    first = version[1]
-  }
-  if (
-    first === '0' ||
-    /alpha|beta|snapshot|dev|pre|rc|scm|cvs/i.test(version)
-  ) {
-    return 'orange'
+function parseDate(...args) {
+  let date
+  if (args.length >= 2) {
+    // always use strict mode if format arg is supplied
+    date = dayjs(...args, true)
   } else {
-    return 'blue'
+    date = dayjs(...args)
   }
+  if (!date.isValid()) {
+    throw new InvalidResponse({ prettyMessage: 'invalid date' })
+  }
+  return date
 }
 
 /**
- * Determines the color used for a badge based on PEP440 versioning.
+ * Returns a formatted date string without the year based on the value of input date param d.
  *
- * @param {string|number} version Version used for determining badge color
+ * @param {Date | string | number | dayjs } d JS Date object, string, unix timestamp or dayjs object
+ * @returns {string} Formatted date string
+ */
+function formatDate(d) {
+  const date = parseDate(d)
+  const dateString = date.calendar(null, {
+    lastDay: '[yesterday]',
+    sameDay: '[today]',
+    lastWeek: '[last] dddd',
+    sameElse: 'MMMM YYYY',
+  })
+  // Trim current year from date string
+  return dateString.replace(` ${dayjs().year()}`, '').toLowerCase()
+}
+
+/**
+ * Determines the color used for a badge according to the age.
+ * Age is calculated as days elapsed till current date.
+ * The color varies from bright green to red as the age increases
+ * or the other way around if `reverse` is given `true`.
+ *
+ * @param {Date | string | number | dayjs } date JS Date object, string, unix timestamp or dayjs object
+ * @param {boolean} reversed Reverse the color scale (the older, the better)
  * @returns {string} Badge color
  */
-function pep440VersionColor(version) {
-  if (!pep440.valid(version)) {
-    return 'lightgrey'
-  }
-  const parsedVersion = pep440.explain(version)
-  if (parsedVersion.is_prerelease || parsedVersion.public.startsWith('0.')) {
-    return 'orange'
-  }
-  return 'blue'
+function age(date, reversed = false) {
+  const colorByAge = colorScale([7, 30, 180, 365, 730], undefined, !reversed)
+  const daysElapsed = dayjs().diff(parseDate(date), 'days')
+  return colorByAge(daysElapsed)
 }
 
 /**
- * Determines the color used for a badge by comparing the value and floor count values.
- * The color can vary from red to bright green depending on the range the value lies in.
- * Decreasing the value will shift the color towards red.
- * Increasing the value will shift the color towards bright green.
+ * Creates a badge object that displays a date
  *
- * @param {number} value Current value
- * @param {number} yellow Yellow color threshold, should be greater than 0
- * @param {number} yellowgreen Yellowgreen color threshold, should be greater than yellow
- * @param {number} green Green color threshold, should be greater than yellowgreen
- * @returns {string} Badge color
+ * @param {Date | string | number | dayjs } date JS Date object, string, unix timestamp or dayjs object
+ * @param {boolean} reversed Reverse the color scale (the older, the better)
+ * @returns {object} A badge object that has two properties: message, and color
  */
-function floorCount(value, yellow, yellowgreen, green) {
-  if (value &lt;= 0) {
-    return 'red'
-  } else if (value &lt; yellow) {
-    return 'yellow'
-  } else if (value &lt; yellowgreen) {
-    return 'yellowgreen'
-  } else if (value &lt; green) {
-    return 'green'
-  } else {
-    return 'brightgreen'
-  }
+function renderDateBadge(date, reversed = false) {
+  const d = parseDate(date)
+  const color = age(d, reversed)
+  const message = formatDate(d)
+  return { message, color }
 }
 
 /**
- * Determines the color used for a badge by comparing the download count and floor values.
- * The color varies from red to bright green as the download count increases.
+ * Returns a relative date from the input timestamp.
+ * For example, day after tomorrow's timestamp will return 'in 2 days'.
  *
- * @param {number} downloads Download count
- * @returns {string} Badge color
+ * @param {number | string} timestamp - Unix timestamp
+ * @returns {string} Relative date from the unix timestamp
  */
-function downloadCount(downloads) {
-  return floorCount(downloads, 10, 100, 1000)
+function formatRelativeDate(timestamp) {
+  const parsedDate = dayjs.unix(parseInt(timestamp, 10))
+  if (!parsedDate.isValid()) {
+    return 'invalid date'
+  }
+  return dayjs().to(parsedDate).toLowerCase()
 }
 
-/**
- * Determines the color used for a badge by comparing percentage and floor values.
- * The color varies from red to bright green as the percentage increases.
- *
- * @param {number} percentage Percentage value
- * @returns {string} Badge color
- */
-function coveragePercentage(percentage) {
-  return floorCount(percentage, 80, 90, 100)
-}
-
-/**
- * Determines the color used for a badge by matching score with grade values.
- * The color varies from bright green to red as the score decreases.
- * The score can be one of the following grade value: ['A', 'B', 'C', 'D', 'E'].
- * The color defaults to red if the score does not matches with any of the grade values.
- *
- * @param {string} score Score value
- * @returns {string} Badge color
- */
-function letterScore(score) {
-  if (score === 'A') {
-    return 'brightgreen'
-  } else if (score === 'B') {
-    return 'green'
-  } else if (score === 'C') {
-    return 'yellowgreen'
-  } else if (score === 'D') {
-    return 'yellow'
-  } else if (score === 'E') {
-    return 'orange'
-  } else {
-    return 'red'
-  }
-}
-
-/**
- * Creates a callback function that determines badge color from the colors array.
- * If the colors array is provided then for n steps, there should be n + 1 color.
- * If the colors array is not provided then it is chosen from the default colors array
- * according to the size of the steps array.
- *
- * @param {number[]} steps Steps array
- * @param {string[]} colors Colors array. If provided, should be of length steps.length + 1
- * @param {boolean} reversed If true then the colors array will be considered in reverse order
- * @returns {function(number): string} Function that finds the step index by comparing value
- * with steps array and returns color from colors array for the corresponding step index
- */
-function colorScale(steps, colors, reversed) {
-  if (steps === undefined) {
-    throw Error('When invoking colorScale, steps should be provided.')
-  }
-
-  const defaultColors = {
-    1: ['red', 'brightgreen'],
-    2: ['red', 'yellow', 'brightgreen'],
-    3: ['red', 'yellow', 'green', 'brightgreen'],
-    4: ['red', 'yellow', 'yellowgreen', 'green', 'brightgreen'],
-    5: ['red', 'orange', 'yellow', 'yellowgreen', 'green', 'brightgreen'],
-  }
-
-  if (typeof colors === 'undefined') {
-    if (steps.length in defaultColors) {
-      colors = defaultColors[steps.length]
-    } else {
-      throw Error(`No default colors for ${steps.length} steps.`)
-    }
-  }
-
-  if (steps.length !== colors.length - 1) {
-    throw Error(
-      'When colors are provided, there should be n + 1 colors for n steps.',
-    )
-  }
-
-  if (reversed) {
-    colors = Array.from(colors).reverse()
-  }
-
-  return value => {
-    const stepIndex = steps.findIndex(step => value &lt; step)
-
-    // For the final step, stepIndex is -1, so in all cases this expression
-    // works swimmingly.
-    return colors.slice(stepIndex)[0]
-  }
-}
-
-export {
-  colorScale,
-  coveragePercentage,
-  downloadCount,
-  floorCount,
-  letterScore,
-  pep440VersionColor,
-  version,
-}
+export { parseDate, renderDateBadge, formatDate, formatRelativeDate, age }
 </code></pre>
         </article>
     </section>
