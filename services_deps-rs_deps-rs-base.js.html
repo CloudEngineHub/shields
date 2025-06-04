@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: services/licenses.js</title>
+    <title>JSDoc: Source: services/deps-rs/deps-rs-base.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: services/licenses.js</h1>
+    <h1 class="page-title">Source: services/deps-rs/deps-rs-base.js</h1>
 
     
 
@@ -26,165 +26,91 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
- * Common functions and utilities for tasks related to license badges.
- *
- * @module
- */
+            <pre class="prettyprint source linenums"><code>import Joi from 'joi'
+import { BaseJsonService } from '../index.js'
 
-import toArray from '../core/base-service/to-array.js'
+const depsResponseSchema = Joi.object({
+  message: Joi.string().required(),
+}).required()
 
-const licenseTypes = {
-  // permissive licenses - not public domain and not copyleft
-  permissive: {
-    spdxLicenseIds: [
-      'AFL-3.0',
-      'Apache-2.0',
-      'Artistic-2.0',
-      'BSD-2-Clause',
-      'BSD-3-Clause',
-      'BSD-3-Clause-Clear',
-      'BSL-1.0',
-      'CC-BY-4.0',
-      'ECL-2.0',
-      'ISC',
-      'MIT',
-      'MS-PL',
-      'NCSA',
-      'PostgreSQL',
-      'Zlib',
-    ],
-    aliases: ['BSD', 'Apache 2.0'],
-    color: 'green',
-    priority: '2',
-  },
-  // copyleft licenses require 'Disclose source' (https://choosealicense.com/appendix/#disclose-source)
-  // or 'Same license' (https://choosealicense.com/appendix/#same-license)
-  copyleft: {
-    spdxLicenseIds: [
-      'AGPL-1.0-only',
-      'AGPL-1.0-or-later',
-      'AGPL-3.0-only',
-      'AGPL-3.0-or-later',
-      'CC-BY-SA-4.0',
-      'EPL-1.0',
-      'EPL-2.0',
-      'EUPL-1.1',
-      'GPL-1.0-only',
-      'GPL-1.0-or-later',
-      'GPL-2.0-only',
-      'GPL-2.0-or-later',
-      'GPL-3.0-only',
-      'GPL-3.0-or-later',
-      'LGPL-2.0-only',
-      'LGPL-2.0-or-later',
-      'LGPL-2.1-only',
-      'LGPL-2.1-or-later',
-      'LGPL-3.0-only',
-      'LGPL-3.0-or-later',
-      'LPPL-1.3c',
-      'MPL-2.0',
-      'MS-RL',
-      'OFL-1.1',
-      'OSL-3.0',
-    ],
-    aliases: [
-      'GPL',
-      'GPL-2.0',
-      'GPL-3.0',
-      'GPLv2',
-      'GPLv2+',
-      'GPLv3',
-      'GPLv3+',
-      'LGPL',
-      'LGPL-2.1',
-      'LGPL-3.0',
-      'LGPLv2',
-      'LGPLv2+',
-      'LGPLv3',
-      'LGPLv3+',
-      'AGPL-3.0',
-      'AGPLv3+',
-      'MPL',
-      'MPL 1.1',
-      'MPL 2.0',
-      'EPL',
-    ],
-    color: 'orange',
-    priority: '1',
-  },
-  // public domain licenses do not require 'License and copyright notice' (https://choosealicense.com/appendix/#include-copyright)
-  'public-domain': {
-    spdxLicenseIds: ['CC0-1.0', 'Unlicense', 'WTFPL', '0BSD'],
-    aliases: ['CC0'],
-    color: '7cd958',
-    priority: '3',
-  },
-}
+class BaseDepsRsService extends BaseJsonService {
+  static defaultBadgeData = { label: 'dependencies' }
 
-/**
- * Mapping of licenses to their corresponding color and priority.
- *
- * @type {object}
- */
-const licenseToColorMap = {}
-Object.keys(licenseTypes).forEach(licenseType => {
-  const { spdxLicenseIds, aliases, color, priority } = licenseTypes[licenseType]
-  spdxLicenseIds.forEach(license => {
-    licenseToColorMap[license] = { color, priority }
-  })
-  aliases.forEach(license => {
-    licenseToColorMap[license] = { color, priority }
-  })
-})
+  /**
+   * Maps message values to shields color scheme
+   *
+   * @param {string} message - The message to help determine appropriate color
+   * @returns {string} The shields color
+   */
+  static mapColor(message) {
+    const normalizedMessage = message.toLowerCase()
 
-/**
- * Maps the license to its corresponding color and priority and sorts the list of mapped licenses by priority.
- *
- * @param {string | string[]} licenses License or list of licenses
- * @returns {string} Color corresponding to the license or the list of licenses
- */
-function licenseToColor(licenses) {
-  if (!Array.isArray(licenses)) {
-    licenses = [licenses]
+    const colorMap = {
+      'up to date': 'brightgreen',
+      none: 'brightgreen',
+      'maybe insecure': 'yellowgreen',
+      insecure: 'red',
+      unknown: 'lightgrey',
+      'not found': 'lightgrey',
+      invalid: 'lightgrey',
+    }
+
+    if (colorMap[normalizedMessage]) {
+      return colorMap[normalizedMessage]
+    }
+
+    // e.g. "1 of 2 outdated"
+    if (normalizedMessage.endsWith('outdated')) {
+      return 'yellow'
+    }
+
+    return 'lightgrey'
   }
 
-  const [{ color }] = licenses
-    .map(license => licenseToColorMap[license])
-    .filter(Boolean)
-    .concat([{ color: 'lightgrey', priority: 0 }])
-    .sort((a, b) => b.priority - a.priority)
-
-  return color
-}
-
-/**
- * Handles rendering concerns of license badges.
- * Determines the message of the badge by joining the licenses in a comma-separated format.
- * Sets the badge color to the provided value, if not provided then the color is used from licenseToColorMap.
- *
- * @param {object} attrs Refer to individual attributes
- * @param {string} [attrs.license] License to render, required if badge contains only one license
- * @param {string[]} [attrs.licenses] List of licenses to render, required if badge contains multiple licenses
- * @param {string} [attrs.color] If provided then the badge will use this color value
- * @returns {object} Badge with message and color properties
- */
-function renderLicenseBadge({ license, licenses, color }) {
-  if (licenses === undefined) {
-    licenses = toArray(license)
+  /**
+   * Fetches data from the deps.rs API.
+   *
+   * @param {object} options - The options for the request
+   * @param {string} options.crate - The crate name.
+   * @param {string} options.version - The crate version number or 'latest'.
+   * @returns {Promise&lt;object>} the JSON response from the API.
+   */
+  async fetchCrate({ crate, version }) {
+    const url = `https://deps.rs/crate/${crate}/${version}/shield.json`
+    return this._requestJson({
+      schema: depsResponseSchema,
+      url,
+      httpErrors: {
+        404: 'not found',
+      },
+    })
   }
 
-  if (licenses.length === 0) {
-    return { message: 'missing', color: 'red' }
-  }
-
-  return {
-    message: licenses.join(', '),
-    color: color || licenseToColor(licenses),
+  /**
+   * Fetches data from the deps.rs API for a repository.
+   *
+   * @param {object} options - The options for the request
+   * @param {string} options.site - The repository site (e.g., 'github').
+   * @param {string} options.user - The repository owner/user.
+   * @param {string} options.repo - The repository name.
+   * @returns {Promise&lt;object>} the JSON response from the API.
+   */
+  async fetchRepo({ site, user, repo }) {
+    const url = `https://deps.rs/repo/${site}/${user}/${repo}/shield.json`
+    return this._requestJson({
+      schema: depsResponseSchema,
+      url,
+      httpErrors: {
+        404: 'unknown',
+      },
+    })
   }
 }
 
-export { licenseToColor, renderLicenseBadge }
+const description =
+  '[Deps.rs](https://deps.rs/) is a service that checks dependency security status in Rust projects.'
+
+export { BaseDepsRsService, description }
 </code></pre>
         </article>
     </section>
