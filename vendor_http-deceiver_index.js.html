@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Tutorial: input-validation</title>
+    <title>JSDoc: Source: vendor/http-deceiver/index.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,85 +17,309 @@
 
 <div id="main">
 
-    <h1 class="page-title">Tutorial: input-validation</h1>
+    <h1 class="page-title">Source: vendor/http-deceiver/index.js</h1>
 
-    <section>
-
-<header>
     
 
-    <h2>input-validation</h2>
-</header>
 
-<article>
-    <h1>Input Data Validation</h1>
-<p>When we receive input data from an upstream API, we perform input validation to:</p>
-<ul>
-<li>Ensure we won't throw a runtime error trying to render a badge</li>
-<li>Ensure we won't render badges with spurious or unexpected output e.g: <img src="https://img.shields.io/badge/version-null-blue" alt=""> <img src="https://img.shields.io/badge/coverage-NaN%25-red" alt=""> <img src="https://img.shields.io/badge/build-undefined-red" alt=""> <img src="https://img.shields.io/badge/coverage---10%25-critical" alt=""> etc</li>
-<li>Express and document our understanding of the input data</li>
-</ul>
-<h2>Writing schemas and validation</h2>
-<ul>
-<li>
-<p>The default validation mechanism should be to use <a href="https://github.com/hapijs/joi">Joi</a> to define a schema for the input data. Validation against Joi schemas is implemented in the base classes and inherited by every service class that extends them. Sometimes additional manual validation is needed which can't be covered by Joi and plugins in which case we implement it by hand.</p>
-</li>
-<li>
-<p>If validation is implemented manually (because we need to enforce a constraint that can't be expressed with Joi), invalid data should throw an <a href="https://contributing.shields.io/module-core_base-service_errors-InvalidResponse.html">InvalidResponse</a> exception.</p>
-</li>
-<li>
-<p>Our definition of &quot;valid&quot; should not be stricter than the upstream API's definition of &quot;valid&quot;.</p>
-</li>
-<li>
-<p>The schema/validation we choose is informed by the assumptions we're making about the data. e.g:</p>
-<ul>
-<li>If we're going to use a value, make sure it exists.</li>
-<li>If we need to multiply it by something, we check it's a number.</li>
-<li>If we're going to call <code>.split()</code> on it, we make sure it's a string.</li>
-<li>If we're going to address <code>foo[0]</code>, <code>foo</code> must be an array.</li>
-<li>If we're going to sort a version on the assumption it is a semver, check it's a semver</li>
-</ul>
-</li>
-<li>
-<p>We don't need to validate characteristics we don't rely on. For example, if we're just going to render a version on a badge with the same exact value from the API response and do not need to sort or transform the value, then it doesn't matter what format the version number is in. We can use a very relaxed schema to validate in this case, e.g. <code>Joi.string().required()</code></p>
-</li>
-<li>
-<p>https://joi.dev/tester/ is a tool that can be used to reverse engineer a schema from an API response. This can be a great starting point to tweak from. If using this as a starting point, remember to remove fields we don't rely on to render a badge.</p>
-</li>
-<li>
-<p>If theory (docs) and practice (real-world API responses) conflict, real-world outputs take precedence over documented behaviour. e.g: if the docs say version is a semver but we learn that there are real-world packages where the version number is <code>0.3b</code> or <code>1.2.1.27</code> then we should accept those values in preference to enforcing the documented API behaviour.</p>
-</li>
-<li>
-<p>Shields is descriptive rather than prescriptive. We reflect the established norms of the communities we serve.</p>
-</li>
-<li>
-<p>It is fine to define a single schema which is applied to multiple badges. For example, we could define a schema that says:</p>
-<pre class="prettyprint source lang-js"><code>const schema = Joi.object({
-  license: Joi.string().required(),
-  version: Joi.string().required(),
-}).required()
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/* eslint-disable */
+/**
+ * The related issue:
+ * https://github.com/badges/shields/issues/11071
+ *
+ * The code below is a modified version of the original http-deceiver library.
+ * It has been adapted to work with Node.js versions that have deprecated
+ * the original implementation.
+ *
+ * The original library can be found at:
+ * https://github.com/spdy-http2/http-deceiver (MIT License)
+ *
+ * This version is specifically tailored to handle the deprecation of
+ * the `http_parser` module in Node.js v12 and later.
+ * https://github.com/beenotung/http-deceiver/blob/node-v12-deprecation-fix/lib/deceiver.js (MIT License)
+ *
+ * It maintains compatibility with older Node.js versions while providing
+ * a consistent interface for HTTP request and response parsing.
+ */
+var assert = require('assert')
+
+var Buffer = require('buffer').Buffer
+
+// Node.js version
+var mode = /^v0\.8\./.test(process.version)
+  ? 'rusty'
+  : /^v0\.(9|10)\./.test(process.version)
+    ? 'old'
+    : /^v0\.12\./.test(process.version)
+      ? 'normal'
+      : 'modern'
+
+var HTTPParser
+
+var methods
+var reverseMethods
+
+// var kOnHeaders
+var kOnHeadersComplete
+var kOnMessageComplete
+var kOnBody
+if (mode === 'normal' || mode === 'modern') {
+  HTTPParser = require('_http_common').HTTPParser
+  methods = require('_http_common').methods
+
+  // &lt;= v11
+  if (!HTTPParser) {
+    HTTPParser = process.binding('http_parser').HTTPParser
+    methods = process.binding('http_parser').methods
+  }
+
+  // &lt;= v5
+  if (!methods) {
+    methods = HTTPParser.methods
+  }
+
+  reverseMethods = {}
+
+  methods.forEach(function (method, index) {
+    reverseMethods[method] = index
+  })
+
+  // kOnHeaders = HTTPParser.kOnHeaders | 0
+  kOnHeadersComplete = HTTPParser.kOnHeadersComplete | 0
+  kOnMessageComplete = HTTPParser.kOnMessageComplete | 0
+  kOnBody = HTTPParser.kOnBody | 0
+} else {
+  // kOnHeaders = 'onHeaders'
+  kOnHeadersComplete = 'onHeadersComplete'
+  kOnMessageComplete = 'onMessageComplete'
+  kOnBody = 'onBody'
+}
+
+function Deceiver(socket, options) {
+  this.socket = socket
+  this.options = options || {}
+  this.isClient = this.options.isClient
+}
+module.exports = Deceiver
+
+Deceiver.create = function create(stream, options) {
+  return new Deceiver(stream, options)
+}
+
+Deceiver.prototype._toHeaderList = function _toHeaderList(object) {
+  var out = []
+  var keys = Object.keys(object)
+
+  for (var i = 0; i &lt; keys.length; i++) {
+    out.push(keys[i], object[keys[i]])
+  }
+
+  return out
+}
+
+Deceiver.prototype._isUpgrade = function _isUpgrade(request) {
+  return (
+    request.method === 'CONNECT' ||
+    request.headers.upgrade ||
+    (request.headers.connection &amp;&amp;
+      /(^|\W)upgrade(\W|$)/i.test(request.headers.connection))
+  )
+}
+
+// TODO(indutny): support CONNECT
+if (mode === 'modern') {
+  /*
+  function parserOnHeadersComplete(versionMajor, versionMinor, headers, method,
+                                   url, statusCode, statusMessage, upgrade,
+                                   shouldKeepAlive) {
+   */
+  Deceiver.prototype.emitRequest = function emitRequest(request) {
+    var parser = this.socket.parser
+    assert(parser, 'No parser present')
+
+    parser.execute = null
+
+    var self = this
+    var method = reverseMethods[request.method]
+    parser.execute = function execute() {
+      self._skipExecute(this)
+      this[kOnHeadersComplete](
+        1,
+        1,
+        self._toHeaderList(request.headers),
+        method,
+        request.path,
+        0,
+        '',
+        self._isUpgrade(request),
+        true,
+      )
+      return 0
+    }
+
+    this._emitEmpty()
+  }
+
+  Deceiver.prototype.emitResponse = function emitResponse(response) {
+    var parser = this.socket.parser
+    assert(parser, 'No parser present')
+
+    parser.execute = null
+
+    var self = this
+    parser.execute = function execute() {
+      self._skipExecute(this)
+      this[kOnHeadersComplete](
+        1,
+        1,
+        self._toHeaderList(response.headers),
+        response.path,
+        response.code,
+        response.status,
+        response.reason || '',
+        self._isUpgrade(response),
+        true,
+      )
+      return 0
+    }
+
+    this._emitEmpty()
+  }
+} else {
+  /*
+    `function parserOnHeadersComplete(info) {`
+
+    info = { .versionMajor, .versionMinor, .url, .headers, .method,
+             .statusCode, .statusMessage, .upgrade, .shouldKeepAlive }
+   */
+  Deceiver.prototype.emitRequest = function emitRequest(request) {
+    var parser = this.socket.parser
+    assert(parser, 'No parser present')
+
+    var method = request.method
+    if (reverseMethods) {
+      method = reverseMethods[method]
+    }
+
+    var info = {
+      versionMajor: 1,
+      versionMinor: 1,
+      url: request.path,
+      headers: this._toHeaderList(request.headers),
+      method: method,
+      statusCode: 0,
+      statusMessage: '',
+      upgrade: this._isUpgrade(request),
+      shouldKeepAlive: true,
+    }
+
+    var self = this
+    parser.execute = function execute() {
+      self._skipExecute(this)
+      this[kOnHeadersComplete](info)
+      return 0
+    }
+
+    this._emitEmpty()
+  }
+
+  Deceiver.prototype.emitResponse = function emitResponse(response) {
+    var parser = this.socket.parser
+    assert(parser, 'No parser present')
+
+    var info = {
+      versionMajor: 1,
+      versionMinor: 1,
+      url: response.path,
+      headers: this._toHeaderList(response.headers),
+      method: false,
+      statusCode: response.status,
+      statusMessage: response.reason || '',
+      upgrade: this._isUpgrade(response),
+      shouldKeepAlive: true,
+    }
+
+    var self = this
+    parser.execute = function execute() {
+      self._skipExecute(this)
+      this[kOnHeadersComplete](info)
+      return 0
+    }
+
+    this._emitEmpty()
+  }
+}
+
+Deceiver.prototype._skipExecute = function _skipExecute(parser) {
+  var self = this
+  var oldExecute = parser.constructor.prototype.execute
+  var oldFinish = parser.constructor.prototype.finish
+
+  parser.execute = null
+  parser.finish = null
+
+  parser.execute = function execute(buffer, start, len) {
+    // Parser reuse
+    if (this.socket !== self.socket) {
+      this.execute = oldExecute
+      this.finish = oldFinish
+      return this.execute(buffer, start, len)
+    }
+
+    if (start !== undefined) {
+      buffer = buffer.slice(start, start + len)
+    }
+    self.emitBody(buffer)
+    return len
+  }
+
+  parser.finish = function finish() {
+    // Parser reuse
+    if (this.socket !== self.socket) {
+      this.execute = oldExecute
+      this.finish = oldFinish
+      return this.finish()
+    }
+
+    this.execute = oldExecute
+    this.finish = oldFinish
+    self.emitMessageComplete()
+  }
+}
+
+Deceiver.prototype.emitBody = function emitBody(buffer) {
+  var parser = this.socket.parser
+  assert(parser, 'No parser present')
+
+  parser[kOnBody](buffer, 0, buffer.length)
+}
+
+Deceiver.prototype._emitEmpty = function _emitEmpty() {
+  // Emit data to force out handling of UPGRADE
+  var empty = new Buffer(0)
+  if (this.socket.ondata) {
+    this.socket.ondata(empty, 0, 0)
+  } else {
+    this.socket.emit('data', empty)
+  }
+}
+
+Deceiver.prototype.emitMessageComplete = function emitMessageComplete() {
+  var parser = this.socket.parser
+  assert(parser, 'No parser present')
+
+  parser[kOnMessageComplete]()
+}
 </code></pre>
-<p>and have both the license and version badges validate the response against that schema.</p>
-</li>
-<li>
-<p>For build status badges there is a shared <a href="https://github.com/badges/shields/blob/master/services/build-status.js">isBuildStatus</a> validator. In most cases build status badges should use <code>isBuildStatus</code> or input validation and <code>renderBuildStatusBadge</code> should be used for rendering. Any additional status values can be added to the relevant color arrays.</p>
-</li>
-</ul>
-<h2>Identifying problems</h2>
-<ul>
-<li>
-<p>If we know of a real-world example of a package/repo/etc that causes us to render an invalid value on a badge (e.g: <img src="https://img.shields.io/badge/version-null-blue" alt=""> <img src="https://img.shields.io/badge/coverage-NaN%25-red" alt=""> <img src="https://img.shields.io/badge/build-undefined-red" alt=""> ) our input validation is broken and we should fix it.</p>
-</li>
-<li>
-<p>If we know of a real-world example of a package/repo/etc that causes us to throw an unhandled runtime exception, our input validation is broken and we should fix it.</p>
-</li>
-<li>
-<p>We should not fail to render a badge because of a validation failure on a field that isn't necessary to render the badge. In the above example of a shared license/version schema: If we become aware of a real-world example of a package/repo/etc that has a <code>version</code> key but not a <code>license</code> key then we should split the schema (or make <code>version</code> optional and handle the error in code).</p>
-</li>
-</ul>
-</article>
+        </article>
+    </section>
 
-</section>
+
+
 
 </div>
 
@@ -106,7 +330,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sun Nov 16 2025 03:00:23 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sun Nov 16 2025 03:00:22 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>
